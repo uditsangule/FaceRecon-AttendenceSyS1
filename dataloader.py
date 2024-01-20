@@ -28,8 +28,8 @@ def get_faces_labels(datapath='data'):
             if not imagename.__contains__('.jpg'): continue
             imagepath = os.path.join(datapath,dir_ , imagename)
             image = cv2.imread(imagepath,cv2.COLOR_RGB2BGR)
-            if image.shape[0] > 512 or image.shape[1] > 512: image = cv2.resize(src=image, dsize=(
-            image.shape[1] // int(image.shape[1] / 512), image.shape[1] // int(image.shape[0] / 512)))
+            if int(image.shape[1] / 512) > 4 or int(image.shape[1] / 512) > 4: image = cv2.resize(src=image, dsize=(
+            image.shape[1] // 4 ,image.shape[1] // 4))
             face_roi , faces = detect_face(image)
             for i in face_roi:
                 showimage(i , waitkey=1)
