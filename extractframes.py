@@ -18,4 +18,6 @@ def writeframes(inputvideopath = None , outputpath = f'data' , ext='jpg'):
     return 0
 
 if __name__ == '__main__':
-    writeframes(inputvideopath='/home/udit/Downloads/0_udit_sangule.mp4')
+    videopath = 'videos'
+    for file in os.listdir(videopath):
+        writeframes(inputvideopath=videopath + os.sep + file)
