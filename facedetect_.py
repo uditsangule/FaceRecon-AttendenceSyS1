@@ -4,7 +4,10 @@ import os
 import time
 from utilities import showimage
 from dataloader import predict_ , detect_face
-
+from datetime import datetime
+from pandas import read_csv
+def getCurrenttime(format = "%Y%m%d_%H-%M"):
+    return str(datetime.now().strftime(format))
 
 def drawrect(image , coords , color= (0,255,0)):
     if len(coords) < 1 : return image
@@ -17,7 +20,12 @@ def drawrect(image , coords , color= (0,255,0)):
 def puttext(image,text , pos = (30,30) , color = (255,0,0)):
     return cv2.putText(img=image , text=str(text) , org=pos , fontFace=cv2.FONT_HERSHEY_SIMPLEX ,fontScale=0.5, thickness=1 ,color=color,lineType=cv2.LINE_AA )
 
-def run(inputvideopath = None , _ret= False , scalesize=2):
+def writereport(outdict , outputpath = 'Attendence.csv'):
+    Header = ['RollNo' ,'FirstName','Surname','Status']
+
+
+
+def run(inputvideopath = None , _ret= False , scalesize=2 , aspectratio=4/3):
     if inputvideopath is not None:
         if not os.path.exists(inputvideopath):
             print(f"videopath:{inputvideopath} doesn't exists! Default webcam is started !")
@@ -27,13 +35,18 @@ def run(inputvideopath = None , _ret= False , scalesize=2):
     model = cv2.face.FisherFaceRecognizer.create()
     model.read(filename=f'.{os.sep}facerecon.xml')
     faceframe = []
+    ## reading old data
+    Report = read_csv(filepath_or_buffer='AttendenceReport.csv')
+    Report[getCurrenttime().split('_')[0]] = Report.apply(lambda x:getCurrenttime().split('_')[1] , axis=1)
+    Resultset = set()
     while True:
         tic = time.time()
         ret , frame = cap.read()
+        if (not ret) or cv2.waitKey(1) == ord('q'): break
         if int(frame.shape[1] / 512) > scalesize or int(frame.shape[0] / 512) > scalesize:
             frame = cv2.resize(src=frame,dsize=(frame.shape[1] // scalesize,frame.shape[0] // scalesize))
         fw, fh = frame.shape[:2]
-        if (not ret) or cv2.waitKey(1) == ord('q'): break
+
         fcount+=1
         face_roi , faces = detect_face(frame)
         frame = puttext(frame , text=f"fps:{round(1/(time.time() - tic),2)}" , color=(255,0,0))
@@ -42,10 +55,15 @@ def run(inputvideopath = None , _ret= False , scalesize=2):
             if output is None: continue
             #frame = puttext(image=frame , text=output['confidence'] , pos=(faces[i][2] , faces[i][3]) ,color=(0,255,255))
             frame = puttext(image=frame , text=output['label'] , pos=(faces[i][0]-10 , faces[i][1]-10), color=(255,0,0))
-
+            Report.loc[Report['RollNo']==output['label'],'Status'] = 'P'
+            currDT = getCurrenttime().split('_')
+            Report.loc[Report['RollNo']==output['label'],currDT[0]] = currDT[1]
         cv2.imshow('window', drawrect(frame , faces))
     cap.release()
     cv2.destroyAllWindows()
+    print("SavingReport")
+    Report.to_csv(path_or_buf='AttendenceReport.csv' , index=False)
+    print("Done")
     return 0
 
 def run_folderpath(datapath = 'data'):

@@ -3,6 +3,7 @@ import cv2
 import numpy as np
 from utilities import showimage
 from tqdm.auto import tqdm
+import csv
 def train_(datapath='data' , save_=True , modelpath=f'.{os.sep}facerecon.xml' , reshape=(512,512)):
     faces , labels = get_faces_labels(datapath)
     facerecon = cv2.face.FisherFaceRecognizer.create()
@@ -19,9 +20,19 @@ def predict_( faceroi , model ,distanceerr = 1000, reshape=(512,512)):
     out = {'label':labeltemp , 'confidence':90} if  distance < distanceerr else None
     return out
 
+def updateStudents(traindir , outputpath = 'AttendenceReport.csv'):
+    H = ['RollNo' , 'Name' , 'Surname' , 'Status']
+    out = csv.writer(open(outputpath, "w") ,delimiter=',', quoting=csv.QUOTE_ALL)
+    out.writerow(H)
+    for i in os.listdir(traindir):
+        data = i.split('_')
+        data.insert(len(data),'A')
+        out.writerow(data)
+    return
 def get_faces_labels(datapath='data' , scalesize=2):
     facelist = []
     labels = []
+    updateStudents(traindir=datapath)
     for dir_ in os.listdir(datapath):
         label = int(dir_.split('_')[0])
         print(f"reading data for rollno :{label}")
